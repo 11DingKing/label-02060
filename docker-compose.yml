@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-webrtc
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: webrtc_db
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./webrtc-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - webrtc-network
+    restart: always
+
+  # 后端服务
+  webrtc-service:
+    build:
+      context: ./webrtc-service
+      dockerfile: Dockerfile
+    container_name: webrtc-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/webrtc_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123456
+      APP_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    networks:
+      - webrtc-network
+    restart: always
+
+  # 前端服务
+  webrtc-frontend:
+    build:
+      context: ./webrtc
+      dockerfile: Dockerfile
+    container_name: webrtc-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - webrtc-service
+    networks:
+      - webrtc-network
+    restart: always
+
+networks:
+  webrtc-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local

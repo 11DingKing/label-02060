@@ -8,7 +8,7 @@
           type="primary" 
           @click="handleSave" 
           :loading="saving"
-          :disabled="record?.status === 2 && !canEdit
+          :disabled="record?.status === 2 && !canEdit"
         >
           {{ record?.status === 2 ? '已批改' : '保存评分' }}
         </el-button>
